@@ -1,37 +1,81 @@
-let birdXPos, birdYPos;
+let birdXPos, birdYPos, button;
 let birdSpeed = 0;
 let birdAcc = 0.4;
 let birdJump = -12;
-let birdSize = 80;
+let birdSize = 60;
 
 let columnSpeed = -10;
-let columnWidth = 50;
+let columnWidth = 100;
+let columnDistance = 1000;
 
 let columns = [];
+let clouds = [];
 
 let fontsize = 40;
 let score = 0;
 
+let isDead;
+
+let cloud1, cloud2, cloud3;
+
 function setup() {
-  textSize(fontsize);
   createCanvas(windowWidth, windowHeight);
-  restart();
+  cloud1 = loadImage('assets/cloud1.PNG');
+  cloud2 = loadImage('assets/cloud2.PNG');
+  cloud3 = loadImage('assets/cloud3.PNG');
+  Start();
 }
 
 function draw() {
   background(170);
+  UpdateClouds();
   UpdateBird();
   UpdateColumn();
   UpdateScore();
   
+  
+}
+
+function Start(){
+  isDead=true; 
+  birdSpeed = 0;
+  textSize(fontsize * 3);
+  textAlign(CENTER);
+  fill(255);
+  text("START", windowWidth/2, windowHeight/2);
+  button = createButton('START');
+  button.position(windowWidth/2 - 50, windowHeight/2 + 100);
+  button.mousePressed(restart);
+  noLoop();
+}
+
+function Dead(){
+  isDead = true;
+  birdSpeed = 0;
+  textSize(fontsize * 3);
+  textAlign(CENTER);
+  fill(255, 50, 50);
+  text("DEAD", windowWidth/2, windowHeight/2);
+  button.textContent="Restart";
+  button.show();
+  noLoop();
 }
 
 function restart(){
+  isDead = false;
   birdXPos = windowWidth/10;
   birdYPos = windowHeight/3;
   birdSpeed = 0;
   columns = [];
   score = 0;
+  button.hide();
+  loop();
+}
+
+function UpdateClouds(){
+  image(cloud1, 0, 0);
+  image(cloud2, 200, 200);
+  image(cloud3, 500, 500);
 }
 
 function UpdateBird(){
@@ -47,8 +91,8 @@ function UpdateBird(){
 
   birdSpeed += birdAcc;
   birdYPos += birdSpeed;
-  if (birdYPos >= windowHeight){
-    restart(); 
+  if (birdYPos + birdSize/2 >= windowHeight || birdYPos - birdSize/2 < 0){
+    Dead(); 
   }
   
 }
@@ -57,11 +101,18 @@ function UpdateColumn(){
   if (columns.length < 1){
     CreateColumn();
   } else {
-    if (columns[columns.length -1].columnXPos < windowWidth - 750){
+    if (columns[columns.length -1].columnXPos < windowWidth - columnDistance){
       CreateColumn();
     }
   }
   columns.forEach(function(element) {
+    if (birdXPos+birdSize/2>element.columnXPos && birdXPos-birdSize/2<=element.columnXPos+columnWidth){
+      if (birdYPos-birdSize/2<element.columnTopYHeight || birdYPos+birdSize/2 > element.columnBottomYPos){
+        Dead();
+      }
+    }
+
+
     if (element.columnXPos < 0- columnWidth){
       columns.shift();
       score++; 
@@ -76,6 +127,7 @@ function UpdateColumn(){
 }
 
 function UpdateScore(){
+  textSize(fontsize);
   textAlign(CENTER);
   fill(255);
   text(score, windowWidth/2, 80);
@@ -96,7 +148,11 @@ function CreateColumn(){
 
 function keyPressed(){
   if(keyCode == 32){
-    birdSpeed = birdJump;
+    if(isDead){
+      restart();
+    } else {
+      birdSpeed = birdJump;
+    }
   }
 }
 
